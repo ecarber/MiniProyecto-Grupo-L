@@ -14,3 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 
 data <- read_csv("data/logs_moodle_anon.csv")#hay que tener cuidado porque yo he metido el proyecto de R dentro de una carpeta con la carpeta data dentro. Si no funciona el red_csv puede ser porque no está en la misma carpeta.
+```
+
+```{r}
+str(data)
+```
+
