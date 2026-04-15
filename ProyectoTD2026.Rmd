@@ -39,3 +39,12 @@ Para comenzar, en la Tabla \@ref(tab:tabla-estructura) mostramos una muestra de 
 library(knitr)
 # Mostramos las 5 primeras filas de la tabla 'datos' para ver la estructura
 kable(head(datos, 5), caption = "Estructura inicial de los logs de la asignatura")
+
+# Parte Víctor
+
+## Preguntas de Investigación
+Se ha realizado una segunda revisión y se han decretado otras tres preguntas nuevas:
+
+1. **Comportamiento:** ¿Existen diferencias significativas en el nivel de actividad entre usuarios?
+2. **Origen acceso:** ¿Desde qué tipos de origen acceden los usuarios? ¿existen diferencias en el uso según el origen?
+3. **Frecuencia:** ¿Con qué frecuencia acceden los usuarios al Aula Virtual y qué patrones de regularidad se pueden identificar?
