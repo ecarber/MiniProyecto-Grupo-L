@@ -49,3 +49,36 @@ Se ha realizado una segunda revisión y se han decretado otras tres preguntas nu
 1. **Comportamiento:** ¿Existen diferencias significativas en el nivel de actividad entre usuarios?
 2. **Origen acceso:** ¿Desde qué tipos de origen acceden los usuarios? ¿existen diferencias en el uso según el origen?
 3. **Frecuencia:** ¿Con qué frecuencia acceden los usuarios al Aula Virtual y qué patrones de regularidad se pueden identificar?
+
+## Análisis Exploratorio Inicial
+
+```{r}
+# Para ver la actividad por día:
+data$Tiempo <- ymd_hms(data$Hora)
+actividad_dia <- data %>%
+  group_by(Hora) %>%
+  summarise(eventos = n())
+
+# Para ver hábitos horarios, agrupamos por horas:
+data$hora <- hour(data$Hora)
+actividad_hora <- datos %>%
+  group_by(hora) %>%
+  summarise(eventos = n())
+# Crear franjas horarias:
+data$franja <- case_when(
+  data$hora >= 6 & data$hora < 12 ~ "Mañana",
+  data$hora >= 12 & data$hora < 18 ~ "Tarde",
+  data$hora >= 18 & data$hora < 24 ~ "Noche",
+  TRUE ~ "Madrugada"
+)
+data %>%
+  count(franja)
+
+# Para ver la frecuencia, actividad por día y su usuario:
+actividad_usuario <- data %>%
+  group_by(Nombre.completo.del.usuario) %>%
+  summarise(total_eventos = n())
+actividad_usuario_dia <- data %>%
+  group_by(Nombre.completo.del.usuario, Hora) %>%
+  summarise(eventos = n())
+```
