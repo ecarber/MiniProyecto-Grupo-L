@@ -39,6 +39,7 @@ Para comenzar, en la Tabla \@ref(tab:tabla-estructura) mostramos una muestra de 
 library(knitr)
 # Mostramos las 5 primeras filas de la tabla 'datos' para ver la estructura
 kable(head(datos, 5), caption = "Estructura inicial de los logs de la asignatura")
+```
 
 # Parte Víctor
 
