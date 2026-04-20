@@ -9,7 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Importamos el dataset
+# Importamos el dataset
+
 ```{r}
 library(readr)
 
@@ -22,7 +23,7 @@ str(data)
 
 
 
-#Parte Noé Cubero
+# Parte Noé Cubero
 
 ## Preguntas de Investigación
 Tras una primera revisión de los objetivos del proyecto y de la estructura de los logs, nuestro grupo ha definido estas tres preguntas para guiar el análisis:
