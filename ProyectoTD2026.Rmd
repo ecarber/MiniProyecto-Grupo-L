@@ -2,14 +2,21 @@
 title: "MiniProyecto.Grupo-L"
 author: "Alejandro Adán, Edu Carbó, Noé Cubero, Víctor Ínigo Y Anastasia Gheorghiu"
 date: "2026-04-13"
-output: html_document
+output: bookdown::html_document2
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+if (!dir.exists("figures")) dir.create("figures")
 ```
 
+<<<<<<< HEAD
 # Importamos el dataset
+=======
+
+# Importamos el dataset
+>>>>>>> 3b0640ebf239596c6d520c1d05342db0d7b731f1
 
 ```{r}
 library(readr)
@@ -39,7 +46,7 @@ Para comenzar, en la Tabla \@ref(tab:tabla-estructura) mostramos una muestra de 
 ```{r tabla-estructura, echo=FALSE, message=FALSE}
 library(knitr)
 # Mostramos las 5 primeras filas de la tabla 'datos' para ver la estructura
-kable(head(datos, 5), caption = "Estructura inicial de los logs de la asignatura")
+kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura")
 ```
 
 # Parte Víctor
@@ -62,7 +69,7 @@ actividad_dia <- data %>%
 
 # Para ver hábitos horarios, agrupamos por horas:
 data$hora <- hour(data$Hora)
-actividad_hora <- datos %>%
+actividad_hora <- data %>%
   group_by(hora) %>%
   summarise(eventos = n())
 # Crear franjas horarias:
@@ -83,3 +90,46 @@ actividad_usuario_dia <- data %>%
   group_by(Nombre.completo.del.usuario, Hora) %>%
   summarise(eventos = n())
 ```
+
+
+
+Este código es para hacer la primera figura de la memoria, como prueba de lo que vamos a hacer durante todo el trabajo
+
+```{r figura-actividad-horaria, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Distribución de eventos por franja horaria registrados en el Aula Virtual"}
+library(readr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+data <- read_csv("data/logs_moodle_anon.csv")
+
+data <- data %>%
+  mutate(
+    Tiempo = dmy_hms(Hora),
+    hora   = hour(Tiempo),
+    franja = case_when(
+      hora >= 6  & hora < 12 ~ "Mañana",
+      hora >= 12 & hora < 18 ~ "Tarde",
+      hora >= 18 & hora < 24 ~ "Noche",
+      TRUE                   ~ "Madrugada"
+    ),
+    franja = factor(franja, levels = c("Madrugada", "Mañana", "Tarde", "Noche"))
+  )
+
+actividad_franja <- data %>%
+  count(franja, name = "eventos")
+
+ggplot(actividad_franja, aes(x = franja, y = eventos, fill = franja)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    x     = "Franja horaria",
+    y     = "Número de eventos",
+    title = "Actividad en el Aula Virtual por franja horaria"
+  ) +
+  theme_minimal()
+
+
+```
+
+La Figura \@ref(fig:figura-actividad-horaria) muestra cómo se distribuyen
+los accesos al Aula Virtual según la franja horaria del día.
