@@ -11,12 +11,10 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 if (!dir.exists("figures")) dir.create("figures")
 ```
 
-<<<<<<< HEAD
-# Importamos el dataset
-=======
+
 
 # Importamos el dataset
->>>>>>> 3b0640ebf239596c6d520c1d05342db0d7b731f1
+
 
 ```{r}
 library(readr)
