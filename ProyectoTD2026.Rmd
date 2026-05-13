@@ -71,6 +71,19 @@ data$Hora <- dmy_hms(data$Hora)
 ```
 
 
+```{r}
+#he estado mirando con chat a ver que cosas quedaban por hacer y me ha dicho que busque los datos que esten vacios, si esta mal mañana el jueves lo modificamos
+
+## Análisis de datos perdidos (NAs)
+
+#Como parte obligatoria del preprocesamiento de datos, es necesario comprobar si nuestro conjunto de datos contiene valores nulos (NAs) que puedan afectar a los análisis posteriores.
+
+# Contamos cuántos NAs hay en cada columna
+colSums(is.na(data))
+
+#Como se observa en el análisis de valores nulos, la variable `Usuario afectado` presenta 48.203 NAs. Esto no se debe a un error en la carga de datos, sino a la naturaleza de los logs: la mayoría de las interacciones en el Aula Virtual son individuales. Según las especificaciones del proyecto, esta variable solo registra información cuando una acción afecta a terceros, por lo que mantendremos estos registros para el análisis. El resto de variables no presentan valores nulos, lo que indica que el dataset es robusto para el estudio.
+```
+
 
 # Parte Noé Cubero
 
@@ -145,3 +158,64 @@ ggplot(actividad_franja, aes(x = franja, y = eventos, fill = franja)) +
 
 La Figura \@ref(fig:figura-actividad-horaria) muestra cómo se distribuyen
 los accesos al Aula Virtual según la franja horaria del día.
+
+
+
+
+Respuesta a la preguntas que plantee(Noé)
+```{r}
+## Análisis de los componentes más utilizados(Pregunta 2)
+
+# Vamos a ver qué partes del Aula Virtual tienen más éxito
+uso_recursos <- data %>%
+  count(Componente, name = "Frecuencia") %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10) # Cogemos los 10 principales
+
+# Hacemos el gráfico
+ggplot(uso_recursos, aes(x = reorder(Componente, Frecuencia), y = Frecuencia, fill = Componente)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Top 10 Recursos más usados", x = "Componente", y = "Número de clics") +
+  theme_minimal()
+
+#Al mirar el gráfico, queda claro que usamos el Aula Virtual sobre todo para dos cosas: descargar apuntes (Archivos) y subir trabajos (Tareas). Las herramientas para hablar con otros o trabajar en grupo, como los Foros o las Wikis, se usan muchísimo menos. En resumen: vamos a la plataforma a por el material y a entregar lo que nos piden, no a socializar.
+```
+```{r}
+## Análisis de hábitos horarios (Pregunta 3 corregida)
+
+# Usamos parse_date_time para que sea más flexible con la coma y el año
+data <- data %>%
+  mutate(
+    Tiempo = parse_date_time(Hora, orders = "dmy HMS"),
+    Hora_num = hour(Tiempo),
+    Franja = case_when(
+      Hora_num >= 6  & Hora_num < 13 ~ "Mañana (06-13h)",
+      Hora_num >= 13 & Hora_num < 20 ~ "Tarde (13-20h)",
+      Hora_num >= 20 | Hora_num < 2  ~ "Noche (20-02h)",
+      is.na(Hora_num)                ~ "Error en fecha", # Para detectar si algo falla
+      TRUE                           ~ "Madrugada (02-06h)"
+    ),
+    Franja = factor(Franja, levels = c("Mañana (06-13h)", "Tarde (13-20h)", 
+                                       "Noche (20-02h)", "Madrugada (02-06h)"))
+  )
+
+# Resumen para el gráfico
+resumen_horario <- data %>%
+  filter(!is.na(Franja)) %>% # Quitamos errores si los hubiera
+  count(Franja, name = "Total_Eventos")
+
+# Gráfico corregido
+ggplot(resumen_horario, aes(x = Franja, y = Total_Eventos, fill = Franja)) +
+  geom_col(show.legend = FALSE, color = "white") +
+  labs(
+    title = "Actividad por Franjas Horarias (Datos Reales)",
+    x = "Bloque del día",
+    y = "Número de clics"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2")
+
+#Conclusión: El perfil mayoritario del estudiante de esta asignatura es de carácter vespertino, concentrando su esfuerzo principal en las horas posteriores a la docencia presencial y reduciendo su actividad durante la noche.
+```
+
