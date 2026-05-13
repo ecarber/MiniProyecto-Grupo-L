@@ -2,7 +2,10 @@
 title: "MiniProyecto.Grupo-L"
 author: "Alejandro Adán, Edu Carbó, Noé Cubero, Víctor Ínigo Y Anastasia Gheorghiu"
 date: "2026-04-13"
-output: bookdown::html_document2
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
