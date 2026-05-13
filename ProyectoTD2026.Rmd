@@ -14,6 +14,10 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 if (!dir.exists("figures")) dir.create("figures")
 ```
 
+# Introducción
+
+El conjunto de datos utilizado para este análisis proviene de los registros de actividad (logs) del Aula Virtual del grado de Ciencia de Datos. Estos datos han sido previamente anonimizados para garantizar la privacidad de los usuarios mientras se mantiene la integridad de la información académica y de interacción necesaria para el estudio.
+
 
 # Cargar todas las librerías
 ```{r}
