@@ -12,10 +12,14 @@ if (!dir.exists("figures")) dir.create("figures")
 ```
 
 
+# Cargar todas las librerías
+```{r}
+library(pacman)
+
+p_load(knitr, tidyverse, dplyr, tidyr, readr, ggplot2, lubridate)
+```
 
 # Importamos el dataset
-
-
 ```{r}
 library(readr)
 
