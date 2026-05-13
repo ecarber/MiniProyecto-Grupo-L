@@ -3,13 +3,13 @@ title: "MiniProyecto.Grupo-L"
 author: "Alejandro Adán, Edu Carbó, Noé Cubero, Víctor Ínigo Y Anastasia Gheorghiu"
 date: "2026-04-13"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 if (!dir.exists("figures")) dir.create("figures")
 ```
@@ -26,13 +26,15 @@ El conjunto de datos utilizado para este análisis proviene de los registros de 
 
 
 
+# Empezamos a trabajar con los datos
+
 Para empezar a sacar conclusiones de los logs que tenemos, hace falta entender todos los datos que nos han sido dados. Esto se llama hacer un análisis exploratorio de los datos(EDA). En este paso de la investigación, se comprueba con qué tipo de datos vamos a trabajar e intentamos obtener una idea general de cómo estos estan organizados para luego poder manipularlos a la hora de hacernos preguntas y poder responderlas.
 
 # Cargar todas las librerías
 
-Para empezar, cargamos todas las librerías que utilizaremos en el EDA.
+Para empezar, cargamos todas las librerías que utilizaremos en el EDA. En este caso, cargaremos: knitr, tidyverse, dplyr, tidyr, readr, ggplot2, lubridate.
 
-```{r cargar-librerias}
+```{r cargar-librerias, echo = FALSE}
 library(pacman)
 
 p_load(knitr, tidyverse, dplyr, tidyr, readr, ggplot2, lubridate)
@@ -40,14 +42,32 @@ p_load(knitr, tidyverse, dplyr, tidyr, readr, ggplot2, lubridate)
 
 # Importamos el dataset
 
-Necesitaremos cargar los datos que se encuentran en la carpeta data.
+Necesitaremos cargar los datos que se encuentran en la carpeta data. Con la función "read_csv" lo haremos fácilmente. Esta función crea un data frame con los datos del csv.
 
 ```{r leer-fichero-csv}
 data <- read_csv("data/logs_moodle_anon.csv")
 ```
 
+Teniendo ya los datos cargados, observamos de qué tipo es cada variable y las características clave de cada una.
+
 ```{r resumen-variables-en-data}
 summary(data)
+```
+
+El dataset contiene `r nrow(data)` observaciones y `r ncol(data)` variables, cuyos nombres son: Hora, Nombre completo del usuario, Usuario afectado, Contexto del evento, Componente, Nombre evento, Descripción, Origen, Dirección IP. 
+
+Vamos a ver cómo están los datos organizados inicialmente. Para ello mostramos las 5 primeras filas del dataframe creado a partir de los datos
+
+```{r tabla-estructura-inicial, echo=FALSE, message=FALSE}
+kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura")
+```
+
+De momento todas las variables son de tipo carácter. Esto lo tenemos que modificar dependiendo de la información que tiene cada una.
+
+Empezamos con la variable hora. Hay que cambiarla a formato fecha-hora. Para ello usamos la función "dmy_hms", que cambia a día-mes-año - hora-minuto-segundo.
+
+```{r cambio-formato-hora}
+data$Hora <- dmy_hms(data$Hora)
 ```
 
 
@@ -82,36 +102,6 @@ Se ha realizado una segunda revisión y se han decretado otras tres preguntas nu
 
 ## Análisis Exploratorio Inicial
 
-```{r}
-# Para ver la actividad por día:
-data$Tiempo <- ymd_hms(data$Hora)
-actividad_dia <- data %>%
-  group_by(Hora) %>%
-  summarise(eventos = n())
-
-# Para ver hábitos horarios, agrupamos por horas:
-data$hora <- hour(data$Hora)
-actividad_hora <- data %>%
-  group_by(hora) %>%
-  summarise(eventos = n())
-# Crear franjas horarias:
-data$franja <- case_when(
-  data$hora >= 6 & data$hora < 12 ~ "Mañana",
-  data$hora >= 12 & data$hora < 18 ~ "Tarde",
-  data$hora >= 18 & data$hora < 24 ~ "Noche",
-  TRUE ~ "Madrugada"
-)
-data %>%
-  count(franja)
-
-# Para ver la frecuencia, actividad por día y su usuario:
-actividad_usuario <- data %>%
-  group_by(Nombre.completo.del.usuario) %>%
-  summarise(total_eventos = n())
-actividad_usuario_dia <- data %>%
-  group_by(Nombre.completo.del.usuario, Hora) %>%
-  summarise(eventos = n())
-```
 
 
 
