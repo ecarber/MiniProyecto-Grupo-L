@@ -75,6 +75,9 @@ Empezamos con la variable hora. Hay que cambiarla a formato fecha-hora. Para ell
 data$Hora <- dmy_hms(data$Hora)
 ```
 
+Al transformarlo a posix lt y hacer el summary, vemos que la fecha en la que se hizo el primer log es en 2024 y el último en marzo de este año.
+
+
 
 ```{r}
 #he estado mirando con chat a ver que cosas quedaban por hacer y me ha dicho que busque los datos que esten vacios, si esta mal mañana el jueves lo modificamos
