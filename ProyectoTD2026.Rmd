@@ -101,6 +101,8 @@ Tras una primera revisión de los objetivos del proyecto y de la estructura de l
 1. **Patrones de entrega:** ¿Se observa una actividad constante a lo largo del curso o existen picos de acceso masivos únicamente en los días previos a las entregas de tareas?
 2. **Uso de recursos:** De todas las herramientas disponibles en el Aula Virtual (foros, archivos, cuestionarios), ¿cuáles son las que registran un mayor volumen de interacciones?
 3. **Hábitos horarios:** ¿En qué franjas horarias se concentra la mayor parte de nuestra actividad? ¿Predomina el trabajo vespertino o el nocturno?
+4.Desigualdad en la participación: ¿Quién usa más el Aula Virtual? 
+5.¿Cómo entra la clase al Aula Virtual? ¿Usamos todos el ordenador o hay gente que usa la aplicación del móvil?
 
 ## Análisis Exploratorio Inicial
 
@@ -193,6 +195,11 @@ ggplot(uso_recursos, aes(x = reorder(Componente, Frecuencia), y = Frecuencia, fi
 ## Análisis de hábitos horarios (Pregunta 3 corregida)
 
 # Usamos parse_date_time para que sea más flexible con la coma y el año
+
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+
 data <- data %>%
   mutate(
     Tiempo = parse_date_time(Hora, orders = "dmy HMS"),
@@ -227,3 +234,59 @@ ggplot(resumen_horario, aes(x = Franja, y = Total_Eventos, fill = Franja)) +
 #Conclusión: El perfil mayoritario del estudiante de esta asignatura es de carácter vespertino, concentrando su esfuerzo principal en las horas posteriores a la docencia presencial y reduciendo su actividad durante la noche.
 ```
 
+# Desigualdad en la participación: ¿Quién usa más el Aula Virtual? 
+
+Para responder a la pregunta de si el uso de la plataforma es equitativo o si hay "power users" (usuarios muy intensivos), hemos analizado la cantidad de interacciones por cada estudiante.
+
+```{r usuarios-activos, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+
+# Contamos los clics por usuario y cogemos el Top 15
+top_usuarios <- data %>%
+  count(`Nombre completo del usuario`, name = "Total_Clics") %>%
+  arrange(desc(Total_Clics)) %>%
+  head(15)
+
+# Dibujamos el gráfico
+ggplot(top_usuarios, aes(x = reorder(`Nombre completo del usuario`, Total_Clics), y = Total_Clics, fill = `Nombre completo del usuario`)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Top 15 Usuarios con más actividad",
+    x = "Usuario (Anonimizado)",
+    y = "Número total de clics"
+  ) +
+  theme_minimal()
+
+
+#Muestra que el uso no es igualitario. Hay 2 o 3 personas (seguramente el profesor o alumnos muy intensos) que acumulan casi toda la actividad de la plataforma, mientras que el resto de la clase hace un uso mucho más normal y puntual.
+```
+
+# ¿Desde dónde nos conectamos? 
+
+Otra pregunta interesante para entender nuestros hábitos es conocer qué plataformas utilizamos para acceder al Aula Virtual. ¿Es el ordenador la única vía o utilizamos dispositivos móviles? Analizamos la variable `Origen`.
+
+```{r vias-acceso, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+
+# Contamos los clics según su origen (web, ws, etc.)
+accesos <- data %>%
+  count(Origen, name = "Total_Clics") %>%
+  arrange(desc(Total_Clics))
+
+# Creamos un gráfico de barras
+ggplot(accesos, aes(x = reorder(Origen, -Total_Clics), y = Total_Clics, fill = Origen)) +
+  geom_col(show.legend = FALSE, color = "black") +
+  labs(
+    title = "Vías de acceso al Aula Virtual",
+    x = "Plataforma de Origen",
+    y = "Número total de clics"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Pastel1")
+
+#"Además de los accesos habituales, los datos registran una cantidad residual de eventos con origen 'cli' y 'restore'. Estos no corresponden a interacciones reales de los estudiantes, sino a tareas de mantenimiento automático del servidor de Moodle y a la restauración de la copia de seguridad de la asignatura a principios de curso por parte del profesorado."
+
+```
