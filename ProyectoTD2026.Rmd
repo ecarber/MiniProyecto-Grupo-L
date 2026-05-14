@@ -3,9 +3,9 @@ title: "MiniProyecto.Grupo-L"
 author: "Alejandro Adán, Edu Carbó, Noé Cubero, Víctor Ínigo Y Anastasia Gheorghiu"
 date: "2026-04-13"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -30,7 +30,9 @@ El conjunto de datos utilizado para este análisis proviene de los registros de 
 
 Para empezar a sacar conclusiones de los logs que tenemos, hace falta entender todos los datos que nos han sido dados. Esto se llama hacer un análisis exploratorio de los datos(EDA). En este paso de la investigación, se comprueba con qué tipo de datos vamos a trabajar e intentamos obtener una idea general de cómo estos estan organizados para luego poder manipularlos a la hora de hacernos preguntas y poder responderlas.
 
-# Cargar todas las librerías
+
+### Cargar todas las librerías
+
 
 Para empezar, cargamos todas las librerías que utilizaremos en el EDA. En este caso, cargaremos: knitr, tidyverse, dplyr, tidyr, readr, ggplot2, lubridate.
 
@@ -40,7 +42,7 @@ library(pacman)
 p_load(knitr, tidyverse, dplyr, tidyr, readr, ggplot2, lubridate)
 ```
 
-# Importamos el dataset
+### Importamos el dataset
 
 Necesitaremos cargar los datos que se encuentran en la carpeta data. Con la función "read_csv" lo haremos fácilmente. Esta función crea un data frame con los datos del csv.
 
@@ -63,6 +65,9 @@ kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura"
 ```
 
 De momento todas las variables son de tipo carácter. Esto lo tenemos que modificar dependiendo de la información que tiene cada una.
+
+
+### Operaciones con las diferentes variables
 
 Empezamos con la variable hora. Hay que cambiarla a formato fecha-hora. Para ello usamos la función "dmy_hms", que cambia a día-mes-año - hora-minuto-segundo.
 
