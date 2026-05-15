@@ -105,71 +105,7 @@ Tras una primera revisión de los objetivos del proyecto y de la estructura de l
 4.Desigualdad en la participación: ¿Quién usa más el Aula Virtual? 
 5.¿Cómo entra la clase al Aula Virtual? ¿Usamos todos el ordenador o hay gente que usa la aplicación del móvil?
 
-## Análisis Exploratorio Inicial
 
-Para comenzar, en la Tabla \@ref(tab:tabla-estructura) mostramos una muestra de los datos originales. Esto nos permite verificar que tenemos las columnas necesarias (como la fecha, el componente y el nombre del evento) para responder a nuestras preguntas.
-
-```{r tabla-estructura, echo=FALSE, message=FALSE}
-
-# Mostramos las 5 primeras filas de la tabla 'datos' para ver la estructura
-kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura")
-```
-
-# Parte Víctor
-
-## Preguntas de Investigación
-Se ha realizado una segunda revisión y se han decretado otras tres preguntas nuevas:
-
-1. **Comportamiento:** ¿Existen diferencias significativas en el nivel de actividad entre usuarios?
-2. **Origen acceso:** ¿Desde qué tipos de origen acceden los usuarios? ¿existen diferencias en el uso según el origen?
-3. **Frecuencia:** ¿Con qué frecuencia acceden los usuarios al Aula Virtual y qué patrones de regularidad se pueden identificar?
-
-## Análisis Exploratorio Inicial
-
-
-
-
-Este código es para hacer la primera figura de la memoria, como prueba de lo que vamos a hacer durante todo el trabajo
-
-```{r figura-actividad-horaria, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Distribución de eventos por franja horaria registrados en el Aula Virtual"}
-
-data <- read_csv("data/logs_moodle_anon.csv")
-
-data <- data %>%
-  mutate(
-    Tiempo = dmy_hms(Hora),
-    hora   = hour(Tiempo),
-    franja = case_when(
-      hora >= 6  & hora < 12 ~ "Mañana",
-      hora >= 12 & hora < 18 ~ "Tarde",
-      hora >= 18 & hora < 24 ~ "Noche",
-      TRUE                   ~ "Madrugada"
-    ),
-    franja = factor(franja, levels = c("Madrugada", "Mañana", "Tarde", "Noche"))
-  )
-
-actividad_franja <- data %>%
-  count(franja, name = "eventos")
-
-ggplot(actividad_franja, aes(x = franja, y = eventos, fill = franja)) +
-  geom_col(show.legend = FALSE) +
-  labs(
-    x     = "Franja horaria",
-    y     = "Número de eventos",
-    title = "Actividad en el Aula Virtual por franja horaria"
-  ) +
-  theme_minimal()
-
-
-```
-
-La Figura \@ref(fig:figura-actividad-horaria) muestra cómo se distribuyen
-los accesos al Aula Virtual según la franja horaria del día.
-
-
-
-
-Respuesta a la preguntas que plantee(Noé)
 ```{r}
 ## Análisis de los componentes más utilizados(Pregunta 2)
 
@@ -188,6 +124,8 @@ ggplot(uso_recursos, aes(x = reorder(Componente, Frecuencia), y = Frecuencia, fi
 
 #Al mirar el gráfico, queda claro que usamos el Aula Virtual sobre todo para dos cosas: descargar apuntes (Archivos) y subir trabajos (Tareas). Las herramientas para hablar con otros o trabajar en grupo, como los Foros o las Wikis, se usan muchísimo menos. En resumen: vamos a la plataforma a por el material y a entregar lo que nos piden, no a socializar.
 ```
+
+
 ```{r}
 ## Análisis de hábitos horarios (Pregunta 3 corregida)
 
