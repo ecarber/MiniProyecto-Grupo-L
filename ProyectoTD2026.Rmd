@@ -293,23 +293,24 @@ ggplot(accesos, aes(x = reorder(Origen, -Total_Clics), y = Total_Clics, fill = O
 
 # Parte Anastasia Gheorghiu
 
-## Preguntas de investigación
+En esta parte del trabajo se analiza la actividad del Aula Virtual desde una perspectiva temporal y de comportamiento. El objetivo es complementar los análisis anteriores, que ya estudian los recursos más usados, las franjas horarias, los usuarios más activos y las vías de acceso.
 
-En esta parte del trabajo se analiza la actividad del Aula Virtual desde una perspectiva temporal y de comportamiento. El objetivo es complementar los análisis anteriores, que ya estudian los recursos más usados, las franjas horarias, los usuarios más activos y las vías de acceso. En mi caso, me centro en los días de la semana, los picos concretos de actividad, los eventos específicos y la regularidad de conexión de los usuarios.
+## Pregunta 1: ¿Qué días de la semana concentran más actividad en el Aula Virtual?
 
-Las preguntas planteadas son:
+Para responder a esta pregunta se transforma la variable `Hora` en una variable temporal y se extrae el día de la semana. Después se cuentan todos los eventos registrados para cada día.
 
-1. **Actividad semanal:** ¿Qué días de la semana concentran más actividad en el Aula Virtual?
-2. **Eventos concretos:** ¿Cuáles son los eventos específicos más frecuentes dentro de la plataforma?
-3. **Picos de actividad:** ¿Qué fechas concretas registran más interacciones?
-4. **Regularidad de uso:** ¿Cuántos días diferentes accede cada usuario al Aula Virtual?
-5. **Diversidad de conexión:** ¿Cuántas direcciones IP diferentes utiliza cada usuario?
+```{r anastasia-pregunta-1, echo=FALSE, message=FALSE, warning=FALSE}
 
-```{r parte-anastasia, echo=FALSE, message=FALSE, warning=FALSE}
+library(readr)
 library(dplyr)
 library(ggplot2)
 library(lubridate)
 library(knitr)
+
+# Cargamos los datos si todavía no están cargados en el entorno
+if (!exists("data") || is.function(data)) {
+  data <- read_csv("data/logs_moodle_anon.csv")
+}
 
 # Preparamos las variables temporales necesarias para el análisis
 data <- data %>%
@@ -319,7 +320,6 @@ data <- data %>%
     Dia_semana = wday(Tiempo, label = TRUE, abbr = FALSE, week_start = 1)
   )
 
-# Pregunta 1: actividad por día de la semana
 actividad_semana <- data %>%
   count(Dia_semana, name = "Total_eventos")
 
@@ -331,16 +331,30 @@ ggplot(actividad_semana, aes(x = Dia_semana, y = Total_eventos, fill = Dia_seman
     y = "Número total de eventos"
   ) +
   theme_minimal()
+```
 
-# Pregunta 2: eventos concretos más frecuentes
+El gráfico permite observar si la actividad se concentra principalmente durante los días lectivos o si también existe uso relevante durante el fin de semana. Esto ayuda a entender si el Aula Virtual se utiliza solamente como apoyo a las clases o también como herramienta de trabajo autónomo fuera del horario habitual.
+
+## Pregunta 2: ¿Cuáles son los eventos específicos más frecuentes dentro de la plataforma?
+
+En esta pregunta se analiza la variable `Nombre evento`, que recoge la acción concreta realizada dentro del Aula Virtual. Se cuentan los eventos y se muestran los diez más frecuentes.
+
+```{r anastasia-pregunta-2, echo=FALSE, message=FALSE, warning=FALSE}
 eventos_frecuentes <- data %>%
   count(`Nombre evento`, name = "Frecuencia") %>%
   arrange(desc(Frecuencia)) %>%
   head(10)
 
 kable(eventos_frecuentes, caption = "Top 10 eventos más frecuentes en el Aula Virtual")
+```
 
-# Pregunta 3: fechas concretas con mayor actividad
+Este análisis es más detallado que estudiar únicamente los componentes, porque permite diferenciar acciones concretas como visualizar recursos, consultar contenidos, entregar tareas o acceder a diferentes elementos de Moodle. Así se puede interpretar mejor qué tipo de interacción predomina en la plataforma.
+
+## Pregunta 3: ¿Qué fechas concretas registran más interacciones?
+
+Para detectar picos de actividad, se agrupan los eventos por fecha y se seleccionan los diez días con mayor número de interacciones.
+
+```{r anastasia-pregunta-3, echo=FALSE, message=FALSE, warning=FALSE}
 actividad_diaria <- data %>%
   count(Fecha, name = "Total_eventos") %>%
   arrange(desc(Total_eventos)) %>%
@@ -355,8 +369,15 @@ ggplot(actividad_diaria, aes(x = reorder(as.character(Fecha), Total_eventos), y 
     y = "Número total de eventos"
   ) +
   theme_minimal()
+```
 
-# Pregunta 4: regularidad de uso por usuario
+Las fechas con mayor actividad pueden estar relacionadas con entregas, preparación de exámenes, publicación de materiales o momentos importantes de la asignatura. Por tanto, esta pregunta ayuda a comprobar si el trabajo de los estudiantes es constante o si se concentra en momentos concretos del curso.
+
+## Pregunta 4: ¿Qué usuarios acceden al Aula Virtual durante más días diferentes?
+
+En este caso no se analiza solo el número total de clics, sino la continuidad temporal de cada usuario. Para ello se calcula cuántos días distintos aparece cada usuario en los registros.
+
+```{r anastasia-pregunta-4, echo=FALSE, message=FALSE, warning=FALSE}
 regularidad_usuario <- data %>%
   group_by(`Nombre completo del usuario`) %>%
   summarise(
@@ -368,8 +389,15 @@ regularidad_usuario <- data %>%
   head(10)
 
 kable(regularidad_usuario, caption = "Usuarios con mayor número de días activos")
+```
 
-# Pregunta 5: diversidad de direcciones IP por usuario
+Este resultado permite distinguir entre usuarios que acceden de forma puntual y usuarios que utilizan el Aula Virtual de manera más continua a lo largo del curso. Un usuario puede tener muchos clics en pocos días, mientras que otro puede tener una actividad más repartida en el tiempo.
+
+## Pregunta 5: ¿Cuántas direcciones IP diferentes utiliza cada usuario?
+
+Por último, se analiza la diversidad de conexión de cada usuario contando el número de direcciones IP distintas asociadas a sus eventos.
+
+```{r anastasia-pregunta-5, echo=FALSE, message=FALSE, warning=FALSE}
 ips_usuario <- data %>%
   group_by(`Nombre completo del usuario`) %>%
   summarise(
@@ -383,14 +411,6 @@ ips_usuario <- data %>%
 kable(ips_usuario, caption = "Usuarios con mayor número de direcciones IP diferentes")
 ```
 
-## Interpretación de los resultados
+El número de direcciones IP diferentes sirve como aproximación a la variedad de conexiones utilizadas. No permite identificar dispositivos concretos ni lugares exactos, pero puede indicar si algunos usuarios acceden desde varias redes, como la universidad, casa u otros espacios.
 
-El análisis por día de la semana permite observar si el uso del Aula Virtual se concentra principalmente durante los días lectivos o si también existe actividad relevante durante el fin de semana. Esto ayuda a entender si la plataforma se utiliza solo como apoyo a las clases o también como herramienta de trabajo autónomo.
-
-El estudio de los eventos concretos muestra qué acciones específicas se repiten con mayor frecuencia. Este análisis es más detallado que el estudio por componentes, porque permite diferenciar entre visualizar recursos, entregar tareas, consultar contenidos o realizar otras acciones dentro de Moodle.
-
-Las fechas con mayor actividad permiten detectar picos de uso. Estos picos pueden estar relacionados con entregas, preparación de exámenes, publicación de materiales o momentos importantes de la asignatura. Por tanto, esta pregunta ayuda a saber si el trabajo de los estudiantes es constante o si se concentra en momentos concretos.
-
-La regularidad de uso por usuario permite distinguir entre estudiantes que acceden muchos días diferentes y otros que solo entran de forma puntual. No solo importa el número total de clics, sino también la continuidad del uso a lo largo del curso.
-
-Por último, el número de direcciones IP diferentes por usuario sirve como aproximación a la diversidad de conexión. No permite identificar dispositivos concretos ni lugares exactos, pero puede indicar si algunos usuarios acceden desde varias redes, como la universidad, casa u otros espacios.
+Además, los valores muy altos de direcciones IP diferentes deben interpretarse con cautela, ya que pueden corresponder a usuarios con un uso muy intensivo de la plataforma, conexiones desde muchas redes distintas o perfiles con un papel especial dentro del curso.
