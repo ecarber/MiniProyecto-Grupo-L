@@ -2,6 +2,9 @@
 title: "MiniProyecto.Grupo-L"
 author: "Alejandro Adán, Edu Carbó, Noé Cubero, Víctor Ínigo Y Anastasia Gheorghiu"
 date: "2026-04-13"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
 output:
   bookdown::pdf_document2:
     df_print: paged
@@ -10,7 +13,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.pos = "H", out.extra = "")
 
 if (!dir.exists("figures")) dir.create("figures")
 ```
@@ -63,6 +66,7 @@ El dataset contiene `r nrow(data)` observaciones y `r ncol(data)` variables, cuy
 Vamos a ver cómo están los datos organizados inicialmente. Para ello mostramos las 5 primeras filas del dataframe creado a partir de los datos
 
 ```{r tabla-estructura-inicial, message=FALSE}
+
 kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura")
 ```
 
@@ -88,12 +92,12 @@ colSums(is.na(data))
 
 Como se observa en el análisis de valores nulos, la variable `Usuario afectado` presenta 48.203 NAs. Esto no se debe a un error en la carga de datos, sino a la naturaleza de los logs: la mayoría de las interacciones en el Aula Virtual son individuales. Según las especificaciones del proyecto, esta variable solo registra información cuando una acción afecta a terceros, por lo que mantendremos estos registros para el análisis. El resto de variables no presentan valores nulos, lo que indica que el dataset es robusto para el estudio. Ahora ya pasamos a las preguntas.
 
-## Preguntas de Investigación
+# Preguntas de Investigación
 
 Tras una primera revisión de los objetivos del proyecto y de la estructura de los logs, nuestro grupo ha definido varias preguntas:
 
 
-### De todas las herramientas disponibles en el Aula Virtual (foros, archivos, cuestionarios), ¿cuáles son las que registran un mayor volumen de interacciones?
+## De todas las herramientas disponibles en el Aula Virtual (foros, archivos, cuestionarios), ¿cuáles son las que registran un mayor volumen de interacciones?
 
 ```{r componentes-mas-utilizados, fig.cap="Componentes más utilizados"}
 ## Análisis de los componentes más utilizados(Pregunta 2)
@@ -115,7 +119,7 @@ ggplot(uso_recursos, aes(x = reorder(Componente, Frecuencia), y = Frecuencia, fi
 
 Al mirar el gráfico \@ref(fig:componentes-mas-utilizados), queda claro que usamos el Aula Virtual sobre todo para dos cosas: descargar apuntes (Archivos) y subir trabajos (Tareas). Las herramientas para hablar con otros o trabajar en grupo, como los Foros o las Wikis, se usan muchísimo menos. En resumen: vamos a la plataforma a por el material y a entregar lo que nos piden, no a socializar.
 
-### ¿En qué franjas horarias se concentra la mayor parte de nuestra actividad? ¿Predomina el trabajo vespertino o el nocturno?
+## ¿En qué franjas horarias se concentra la mayor parte de nuestra actividad? ¿Predomina el trabajo vespertino o el nocturno?
 
 ```{r franjas-horarias, fig.cap="Franjas Horarias"}
 
@@ -123,8 +127,7 @@ Al mirar el gráfico \@ref(fig:componentes-mas-utilizados), queda claro que usam
 
 data <- data %>%
   mutate(
-    Tiempo = parse_date_time(Hora, orders = "dmy HMS"),
-    Hora_num = hour(Tiempo),
+    Hora_num = hour(Hora),
     Franja = case_when(
       Hora_num >= 6  & Hora_num < 13 ~ "Mañana (06-13h)",
       Hora_num >= 13 & Hora_num < 20 ~ "Tarde (13-20h)",
@@ -155,7 +158,7 @@ ggplot(resumen_horario, aes(x = Franja, y = Total_Eventos, fill = Franja)) +
 
 El perfil mayoritario del estudiante de esta asignatura es de carácter vespertino, concentrando su esfuerzo principal en las horas posteriores a la docencia presencial y reduciendo su actividad durante la noche como es visto en \@ref(fig:franjas-horarias).
 
-### Desigualdad en la participación: ¿Quién usa más el Aula Virtual? 
+## Desigualdad en la participación: ¿Quién usa más el Aula Virtual? 
 
 Para responder a la pregunta de si el uso de la plataforma es equitativo o si hay "power users" (usuarios muy intensivos), hemos analizado la cantidad de interacciones por cada estudiante.
 
@@ -181,7 +184,7 @@ ggplot(top_usuarios, aes(x = reorder(`Nombre completo del usuario`, Total_Clics)
 
 \@ref(fig:usuarios-activos) muestra que el uso no es igualitario. Hay 2 o 3 personas (seguramente el profesor o alumnos muy intensos) que acumulan casi toda la actividad de la plataforma, mientras que el resto de la clase hace un uso mucho más normal y puntual.
 
-### ¿Cómo entra la clase al Aula Virtual? ¿Usamos todos el ordenador o hay gente que usa la aplicación del móvil?
+## ¿Cómo entra la clase al Aula Virtual? ¿Usamos todos el ordenador o hay gente que usa la aplicación del móvil?
 
 Otra pregunta interesante para entender nuestros hábitos es conocer qué plataformas utilizamos para acceder al Aula Virtual. ¿Es el ordenador la única vía o utilizamos dispositivos móviles? Analizamos la variable `Origen`.
 
@@ -207,11 +210,11 @@ ggplot(accesos, aes(x = reorder(Origen, -Total_Clics), y = Total_Clics, fill = O
 Además de los accesos habituales, los datos registran una cantidad residual de eventos con origen 'cli' y 'restore'. Estos no corresponden a interacciones reales de los estudiantes, sino a tareas de mantenimiento automático del servidor de Moodle y a la restauración de la copia de seguridad de la asignatura a principios de curso por parte del profesorado \@ref(fig:vias-acceso).
 
 
-#Analizamos actitudes de los estudiantes
+# Analizamos actitudes de los estudiantes
 
 En esta parte del trabajo se analiza la actividad del Aula Virtual desde una perspectiva temporal y de comportamiento. El objetivo es complementar los análisis anteriores, que ya estudian los recursos más usados, las franjas horarias, los usuarios más activos y las vías de acceso.
 
-### ¿Qué días de la semana concentran más actividad en el Aula Virtual?
+## ¿Qué días de la semana concentran más actividad en el Aula Virtual?
 
 Para responder a esta pregunta se transforma la variable `Hora` en una variable temporal y se extrae el día de la semana. Después se cuentan todos los eventos registrados para cada día.
 
@@ -240,7 +243,7 @@ ggplot(actividad_semana, aes(x = Dia_semana, y = Total_eventos, fill = Dia_seman
 
 El gráfico \@ref(fig:dias-semana) permite observar si la actividad se concentra principalmente durante los días lectivos o si también existe uso relevante durante el fin de semana. Esto ayuda a entender si el Aula Virtual se utiliza solamente como apoyo a las clases o también como herramienta de trabajo autónomo fuera del horario habitual.
 
-## Pregunta 2: ¿Cuáles son los eventos específicos más frecuentes dentro de la plataforma?
+## ¿Cuáles son los eventos específicos más frecuentes dentro de la plataforma?
 
 En esta pregunta se analiza la variable `Nombre evento`, que recoge la acción concreta realizada dentro del Aula Virtual. Se cuentan los eventos y se muestran los diez más frecuentes.
 
@@ -255,7 +258,7 @@ kable(eventos_frecuentes, caption = "Top 10 eventos más frecuentes en el Aula V
 
 Este análisis \@ref(tab:eventos-frecuentes) es más detallado que estudiar únicamente los componentes, porque permite diferenciar acciones concretas como visualizar recursos, consultar contenidos, entregar tareas o acceder a diferentes elementos de Moodle. Así se puede interpretar mejor qué tipo de interacción predomina en la plataforma.
 
-## Pregunta 3: ¿Qué fechas concretas registran más interacciones?
+## ¿Qué fechas concretas registran más interacciones?
 
 Para detectar picos de actividad, se agrupan los eventos por fecha y se seleccionan los diez días con mayor número de interacciones.
 
@@ -278,7 +281,7 @@ ggplot(actividad_diaria, aes(x = reorder(as.character(Fecha), Total_eventos), y 
 
 Las fechas con mayor actividad, como vemos en \@ref(fig:fechas-mas-inter), pueden estar relacionadas con entregas, preparación de exámenes, publicación de materiales o momentos importantes de la asignatura.
 
-## Pregunta 4: ¿Qué usuarios acceden al Aula Virtual durante más días diferentes?
+## ¿Qué usuarios acceden al Aula Virtual durante más días diferentes?
 
 En este caso no se analiza solo el número total de clics, sino la continuidad temporal de cada usuario. Para ello se calcula cuántos días distintos aparece cada usuario en los registros.
 
@@ -298,7 +301,7 @@ kable(regularidad_usuario, caption = "Usuarios con mayor número de días activo
 
 Este resultado \@ref(tab:dias-diferentes) permite distinguir entre usuarios que acceden de forma puntual y usuarios que utilizan el Aula Virtual de manera más continua a lo largo del curso. Un usuario puede tener muchos clics en pocos días, mientras que otro puede tener una actividad más repartida en el tiempo.
 
-## Pregunta 5: ¿Cuántas direcciones IP diferentes utiliza cada usuario?
+## ¿Cuántas direcciones IP diferentes utiliza cada usuario?
 
 Por último, se analiza la diversidad de conexión de cada usuario contando el número de direcciones IP distintas asociadas a sus eventos.
 
@@ -323,7 +326,7 @@ Además, los valores muy altos de direcciones IP diferentes deben interpretarse 
 
 # Relaciones que podemos investigar 
 
-### Tareas entregadas frente a racha de días seguidos
+## Tareas entregadas frente a racha de días seguidos
 
 Otra cosa que hemos querido investigar es si los estudiantes que se conectan muchos días seguidos terminan entregando más tareas. Para eso, calculamos para cada usuario la racha más larga de días consecutivos que tuvo actividad (solo con accesos desde el ordenador, que son los normales) y lo comparamos con el número de entregas que hizo. Al final miramos la correlación para ver si hay relación entre ser constante y entregar más trabajos.
 
@@ -392,7 +395,7 @@ ggplot(combinado,
 
 La correlación de 0.33 en \@ref(fig:racha-tareas-entregadas) nos indica que tener una racha alta de actividad, NO significa entregar más tareas. Es cierto que la correlación es positiva, pero es demasiado baja como para poder sacar una conclusión que se pueda defender.
 
-### Atención a los alumnos
+## Atención a los alumnos
 
 Dejando de centrarnos específicamente en los alumnos, hemos decidido centrarnos en si se presta atención a todos los alumnos por igual o si hay algunos que reciben mucho más feedback que otros. Para responder, contamos cuántas veces aparece cada estudiante en la columna Usuario afectado (eso indica que alguien hizo algo que le afectaba, como corregirle o mirar su perfil). Luego hicimos un gráfico con todos los alumnos ordenados de los que más atención reciben a los que menos, para ver si la atención se reparte de forma pareja o si unos pocos acumulan casi todo.
 
@@ -457,7 +460,7 @@ Como era de esperar, al comparar estos dos parámetros, vemos \@ref(fig:atencion
 
 # Hábitos y Conductas: Lo que los Logs Dicen de Nosotros
 
-### ¿Existe el "Efecto Maratón"?
+## ¿Existe el "Efecto Maratón"?
 
 Analizamos cuánto tiempo pasa desde el primer clic hasta el último en un mismo día.
 
@@ -483,7 +486,7 @@ ggplot(sesiones_maraton, aes(x = "Estudiantes", y = Duracion_Horas)) +
 
 Mediante el diagrama de cajas \@ref(fig:maraton) revela que, aunque la gran mayoría de los estudiantes realizan consultas rápidas y puntuales (reflejado en una mediana cercana a cero), existe una asimetría positiva muy marcada con la presencia de outliers significativos. Estos valores atípicos, que alcanzan jornadas de hasta 15 o 20 horas, representan comportamientos de estudio intensivo o posibles descuidos técnicos al dejar la sesión abierta, lo que demuestra una variabilidad extrema en el esfuerzo dedicado.
 
-### "Usuarios Fantasma": ¿Qué porcentaje de la actividad corresponde a una consulta pasiva frente a una participación activa?
+## "Usuarios Fantasma": ¿Qué porcentaje de la actividad corresponde a una consulta pasiva frente a una participación activa?
 
 Dividimos a la clase según si solo miran o si realmente envían cosas.
 
@@ -503,7 +506,7 @@ ggplot(perfiles, aes(x = Tipo, fill = Tipo)) +
 
 Esta desproporción\@ref(fig:fantasma) indica que el comportamiento principal de los estudiantes se centra en el consumo de contenidos (visualización de materiales, descarga de archivos y lectura de enunciados) en lugar de la generación de contenido o participación directa.
 
-### El "Pánico del Deadline": ¿Se incrementa la velocidad y frecuencia de las acciones de los usuarios en situaciones de posible presión temporal?
+## El "Pánico del Deadline": ¿Se incrementa la velocidad y frecuencia de las acciones de los usuarios en situaciones de posible presión temporal?
 
 Calculamos la frecuencia de clics. Si hay muchos clics seguidos (pocos segundos entre ellos), hay estrés.
 
@@ -523,12 +526,12 @@ ggplot(velocidad_estres, aes(x = segundos_entre_clics)) +
   theme_minimal()
 ```
 
-El gráfico de densidad del tiempo entre clics  \@ref(fig:fantasma) muestra un pico extremadamente pronunciado en el intervalo de 0 a 10 segundos, lo que revela un comportamiento de navegación frenética y de alta intensidad. Esta acumulación masiva en tiempos tan cortos sugiere que, cuando los usuarios están activos, no se limitan a leer de forma estática, sino que interactúan con la plataforma de manera muy rápida (descargando múltiples archivos, saltando entre secciones o refrescando páginas).
+El gráfico de densidad del tiempo entre clics  \@ref(fig:panico) muestra un pico extremadamente pronunciado en el intervalo de 0 a 10 segundos, lo que revela un comportamiento de navegación frenética y de alta intensidad. Esta acumulación masiva en tiempos tan cortos sugiere que, cuando los usuarios están activos, no se limitan a leer de forma estática, sino que interactúan con la plataforma de manera muy rápida (descargando múltiples archivos, saltando entre secciones o refrescando páginas).
 
 La rápida caída de la curva hacia los 60 segundos confirma que las sesiones de trabajo en el Aula Virtual se caracterizan por ráfagas de actividad muy concentradas, lo que podría interpretarse como el "Pánico del Deadline" o momentos de alta presión donde el estudiante busca y procesa información a gran velocidad para cumplir con una tarea.
 
 
-### El "Rastro del Estudiante": ¿Cuál es la secuencia de acciones más frecuente que precede al envío de una tarea?
+## El "Rastro del Estudiante": ¿Cuál es la secuencia de acciones más frecuente que precede al envío de una tarea?
 
 ¿Qué recurso abrieron justo el segundo antes de darle a "Enviar"?
 
@@ -557,7 +560,7 @@ El gráfico  \@ref(fig:rastro)muestra que la acción que precede con más frecue
 El resto de acciones del ranking, como "Módulo de curso visto", confirman que el paso previo lógico es la
 navegación por la estructura del curso para localizar el buzón de entrega.
 
-### Minería de "S.O.S": ¿Qué eventos técnicos o errores de sistema predominan en los registros de los estudiantes?
+## Minería de "S.O.S": ¿Qué eventos técnicos o errores de sistema predominan en los registros de los estudiantes?
 
 Buscamos palabras de error en las descripciones de los logs.
 
