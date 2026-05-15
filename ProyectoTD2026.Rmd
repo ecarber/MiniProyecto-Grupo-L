@@ -290,3 +290,107 @@ ggplot(accesos, aes(x = reorder(Origen, -Total_Clics), y = Total_Clics, fill = O
 #"Además de los accesos habituales, los datos registran una cantidad residual de eventos con origen 'cli' y 'restore'. Estos no corresponden a interacciones reales de los estudiantes, sino a tareas de mantenimiento automático del servidor de Moodle y a la restauración de la copia de seguridad de la asignatura a principios de curso por parte del profesorado."
 
 ```
+
+# Parte Anastasia Gheorghiu
+
+## Preguntas de investigación
+
+En esta parte del trabajo se analiza la actividad del Aula Virtual desde una perspectiva temporal y de comportamiento. El objetivo es complementar los análisis anteriores, que ya estudian los recursos más usados, las franjas horarias, los usuarios más activos y las vías de acceso. En mi caso, me centro en los días de la semana, los picos concretos de actividad, los eventos específicos y la regularidad de conexión de los usuarios.
+
+Las preguntas planteadas son:
+
+1. **Actividad semanal:** ¿Qué días de la semana concentran más actividad en el Aula Virtual?
+2. **Eventos concretos:** ¿Cuáles son los eventos específicos más frecuentes dentro de la plataforma?
+3. **Picos de actividad:** ¿Qué fechas concretas registran más interacciones?
+4. **Regularidad de uso:** ¿Cuántos días diferentes accede cada usuario al Aula Virtual?
+5. **Diversidad de conexión:** ¿Cuántas direcciones IP diferentes utiliza cada usuario?
+
+```{r parte-anastasia, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(knitr)
+
+# Preparamos las variables temporales necesarias para el análisis
+data <- data %>%
+  mutate(
+    Tiempo = if (inherits(Hora, "POSIXt")) Hora else dmy_hms(Hora),
+    Fecha = as.Date(Tiempo),
+    Dia_semana = wday(Tiempo, label = TRUE, abbr = FALSE, week_start = 1)
+  )
+
+# Pregunta 1: actividad por día de la semana
+actividad_semana <- data %>%
+  count(Dia_semana, name = "Total_eventos")
+
+ggplot(actividad_semana, aes(x = Dia_semana, y = Total_eventos, fill = Dia_semana)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    title = "Actividad del Aula Virtual por día de la semana",
+    x = "Día de la semana",
+    y = "Número total de eventos"
+  ) +
+  theme_minimal()
+
+# Pregunta 2: eventos concretos más frecuentes
+eventos_frecuentes <- data %>%
+  count(`Nombre evento`, name = "Frecuencia") %>%
+  arrange(desc(Frecuencia)) %>%
+  head(10)
+
+kable(eventos_frecuentes, caption = "Top 10 eventos más frecuentes en el Aula Virtual")
+
+# Pregunta 3: fechas concretas con mayor actividad
+actividad_diaria <- data %>%
+  count(Fecha, name = "Total_eventos") %>%
+  arrange(desc(Total_eventos)) %>%
+  head(10)
+
+ggplot(actividad_diaria, aes(x = reorder(as.character(Fecha), Total_eventos), y = Total_eventos)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Fechas con mayor actividad en el Aula Virtual",
+    x = "Fecha",
+    y = "Número total de eventos"
+  ) +
+  theme_minimal()
+
+# Pregunta 4: regularidad de uso por usuario
+regularidad_usuario <- data %>%
+  group_by(`Nombre completo del usuario`) %>%
+  summarise(
+    Dias_activos = n_distinct(Fecha),
+    Total_eventos = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Dias_activos)) %>%
+  head(10)
+
+kable(regularidad_usuario, caption = "Usuarios con mayor número de días activos")
+
+# Pregunta 5: diversidad de direcciones IP por usuario
+ips_usuario <- data %>%
+  group_by(`Nombre completo del usuario`) %>%
+  summarise(
+    IPs_diferentes = n_distinct(`Dirección IP`),
+    Total_eventos = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(IPs_diferentes)) %>%
+  head(10)
+
+kable(ips_usuario, caption = "Usuarios con mayor número de direcciones IP diferentes")
+```
+
+## Interpretación de los resultados
+
+El análisis por día de la semana permite observar si el uso del Aula Virtual se concentra principalmente durante los días lectivos o si también existe actividad relevante durante el fin de semana. Esto ayuda a entender si la plataforma se utiliza solo como apoyo a las clases o también como herramienta de trabajo autónomo.
+
+El estudio de los eventos concretos muestra qué acciones específicas se repiten con mayor frecuencia. Este análisis es más detallado que el estudio por componentes, porque permite diferenciar entre visualizar recursos, entregar tareas, consultar contenidos o realizar otras acciones dentro de Moodle.
+
+Las fechas con mayor actividad permiten detectar picos de uso. Estos picos pueden estar relacionados con entregas, preparación de exámenes, publicación de materiales o momentos importantes de la asignatura. Por tanto, esta pregunta ayuda a saber si el trabajo de los estudiantes es constante o si se concentra en momentos concretos.
+
+La regularidad de uso por usuario permite distinguir entre estudiantes que acceden muchos días diferentes y otros que solo entran de forma puntual. No solo importa el número total de clics, sino también la continuidad del uso a lo largo del curso.
+
+Por último, el número de direcciones IP diferentes por usuario sirve como aproximación a la diversidad de conexión. No permite identificar dispositivos concretos ni lugares exactos, pero puede indicar si algunos usuarios acceden desde varias redes, como la universidad, casa u otros espacios.
