@@ -3,8 +3,9 @@ title: "MiniProyecto.Grupo-L"
 author: "Alejandro Adán, Edu Carbó, Noé Cubero, Víctor Ínigo Y Anastasia Gheorghiu"
 date: "2026-04-13"
 output:
-  pdf_document: default
-  html_document:
+  bookdown::pdf_document2:
+    df_print: paged
+  bookdown::html_document2:
     df_print: paged
 ---
 
@@ -61,11 +62,11 @@ El dataset contiene `r nrow(data)` observaciones y `r ncol(data)` variables, cuy
 
 Vamos a ver cómo están los datos organizados inicialmente. Para ello mostramos las 5 primeras filas del dataframe creado a partir de los datos
 
-```{r tabla-estructura-inicial, echo=FALSE, message=FALSE}
+```{r tabla-estructura-inicial, message=FALSE}
 kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura")
 ```
 
-De momento todas las variables son de tipo carácter. Esto lo tenemos que modificar dependiendo de la información que tiene cada una.
+ \@ref(tab:tabla-estructura-inicial) De momento todas las variables son de tipo carácter. Esto lo tenemos que modificar dependiendo de la información que tiene cada una.
 
 
 ### Operaciones con las diferentes variables
@@ -94,7 +95,7 @@ Tras una primera revisión de los objetivos del proyecto y de la estructura de l
 
 ### De todas las herramientas disponibles en el Aula Virtual (foros, archivos, cuestionarios), ¿cuáles son las que registran un mayor volumen de interacciones?
 
-```{r componentes-mas-utilizados}
+```{r componentes-mas-utilizados, fig.cap="Componentes más utilizados"}
 ## Análisis de los componentes más utilizados(Pregunta 2)
 
 # Vamos a ver qué partes del Aula Virtual tienen más éxito
@@ -114,9 +115,9 @@ ggplot(uso_recursos, aes(x = reorder(Componente, Frecuencia), y = Frecuencia, fi
 
 Al mirar el gráfico \@ref(fig:componentes-mas-utilizados), queda claro que usamos el Aula Virtual sobre todo para dos cosas: descargar apuntes (Archivos) y subir trabajos (Tareas). Las herramientas para hablar con otros o trabajar en grupo, como los Foros o las Wikis, se usan muchísimo menos. En resumen: vamos a la plataforma a por el material y a entregar lo que nos piden, no a socializar.
 
-###¿En qué franjas horarias se concentra la mayor parte de nuestra actividad? ¿Predomina el trabajo vespertino o el nocturno?
+### ¿En qué franjas horarias se concentra la mayor parte de nuestra actividad? ¿Predomina el trabajo vespertino o el nocturno?
 
-```{r franjas-horarias}
+```{r franjas-horarias, fig.cap="Franjas Horarias"}
 
 # Usamos parse_date_time para que sea más flexible con la coma y el año
 
@@ -152,13 +153,13 @@ ggplot(resumen_horario, aes(x = Franja, y = Total_Eventos, fill = Franja)) +
 
 ```
 
-El perfil mayoritario del estudiante de esta asignatura es de carácter vespertino, concentrando su esfuerzo principal en las horas posteriores a la docencia presencial y reduciendo su actividad durante la noche.
+El perfil mayoritario del estudiante de esta asignatura es de carácter vespertino, concentrando su esfuerzo principal en las horas posteriores a la docencia presencial y reduciendo su actividad durante la noche como es visto en \@ref(fig:franjas-horarias).
 
 ### Desigualdad en la participación: ¿Quién usa más el Aula Virtual? 
 
 Para responder a la pregunta de si el uso de la plataforma es equitativo o si hay "power users" (usuarios muy intensivos), hemos analizado la cantidad de interacciones por cada estudiante.
 
-```{r usuarios-activos, message=FALSE, warning=FALSE}
+```{r usuarios-activos, fig.cap="Usos Aula Virtual", message=FALSE, warning=FALSE}
 
 # Contamos los clics por usuario y cogemos el Top 15
 top_usuarios <- data %>%
@@ -178,13 +179,13 @@ ggplot(top_usuarios, aes(x = reorder(`Nombre completo del usuario`, Total_Clics)
   theme_minimal()
 ```
 
-Muestra que el uso no es igualitario. Hay 2 o 3 personas (seguramente el profesor o alumnos muy intensos) que acumulan casi toda la actividad de la plataforma, mientras que el resto de la clase hace un uso mucho más normal y puntual.
+\@ref(fig:usuarios-activos) muestra que el uso no es igualitario. Hay 2 o 3 personas (seguramente el profesor o alumnos muy intensos) que acumulan casi toda la actividad de la plataforma, mientras que el resto de la clase hace un uso mucho más normal y puntual.
 
 ### ¿Cómo entra la clase al Aula Virtual? ¿Usamos todos el ordenador o hay gente que usa la aplicación del móvil?
 
 Otra pregunta interesante para entender nuestros hábitos es conocer qué plataformas utilizamos para acceder al Aula Virtual. ¿Es el ordenador la única vía o utilizamos dispositivos móviles? Analizamos la variable `Origen`.
 
-```{r vias-acceso, message=FALSE, warning=FALSE}
+```{r vias-acceso, fig.cap="Vias de acceso AV", message=FALSE, warning=FALSE}
 
 # Contamos los clics según su origen (web, ws, etc.)
 accesos <- data %>%
@@ -203,7 +204,7 @@ ggplot(accesos, aes(x = reorder(Origen, -Total_Clics), y = Total_Clics, fill = O
   scale_fill_brewer(palette = "Pastel1")
 ```
 
-Además de los accesos habituales, los datos registran una cantidad residual de eventos con origen 'cli' y 'restore'. Estos no corresponden a interacciones reales de los estudiantes, sino a tareas de mantenimiento automático del servidor de Moodle y a la restauración de la copia de seguridad de la asignatura a principios de curso por parte del profesorado.
+Además de los accesos habituales, los datos registran una cantidad residual de eventos con origen 'cli' y 'restore'. Estos no corresponden a interacciones reales de los estudiantes, sino a tareas de mantenimiento automático del servidor de Moodle y a la restauración de la copia de seguridad de la asignatura a principios de curso por parte del profesorado \@ref(fig:vias-acceso).
 
 
 #Analizamos actitudes de los estudiantes
@@ -214,7 +215,7 @@ En esta parte del trabajo se analiza la actividad del Aula Virtual desde una per
 
 Para responder a esta pregunta se transforma la variable `Hora` en una variable temporal y se extrae el día de la semana. Después se cuentan todos los eventos registrados para cada día.
 
-```{r dias-semana, message=FALSE, warning=FALSE}
+```{r dias-semana, fig.cap="Días de la semana",message=FALSE, warning=FALSE}
 
 # Preparamos las variables temporales necesarias para el análisis
 data <- data %>%
@@ -243,7 +244,7 @@ El gráfico \@ref(fig:dias-semana) permite observar si la actividad se concentra
 
 En esta pregunta se analiza la variable `Nombre evento`, que recoge la acción concreta realizada dentro del Aula Virtual. Se cuentan los eventos y se muestran los diez más frecuentes.
 
-```{r eventos-frecuentes, echo=FALSE, message=FALSE, warning=FALSE}
+```{r eventos-frecuentes, message=FALSE, warning=FALSE}
 eventos_frecuentes <- data %>%
   count(`Nombre evento`, name = "Frecuencia") %>%
   arrange(desc(Frecuencia)) %>%
@@ -258,7 +259,7 @@ Este análisis \@ref(tab:eventos-frecuentes) es más detallado que estudiar úni
 
 Para detectar picos de actividad, se agrupan los eventos por fecha y se seleccionan los diez días con mayor número de interacciones.
 
-```{r fechas-mas-iter, message=FALSE, warning=FALSE}
+```{r fechas-mas-inter, fig.cap="Fechas con más interacciones",message=FALSE, warning=FALSE}
 actividad_diaria <- data %>%
   count(Fecha, name = "Total_eventos") %>%
   arrange(desc(Total_eventos)) %>%
@@ -275,7 +276,7 @@ ggplot(actividad_diaria, aes(x = reorder(as.character(Fecha), Total_eventos), y 
   theme_minimal()
 ```
 
-Las fechas con mayor actividad, como vemos en \@ref(fig:fechas-mas-iter), pueden estar relacionadas con entregas, preparación de exámenes, publicación de materiales o momentos importantes de la asignatura.
+Las fechas con mayor actividad, como vemos en \@ref(fig:fechas-mas-inter), pueden estar relacionadas con entregas, preparación de exámenes, publicación de materiales o momentos importantes de la asignatura.
 
 ## Pregunta 4: ¿Qué usuarios acceden al Aula Virtual durante más días diferentes?
 
@@ -301,7 +302,7 @@ Este resultado \@ref(tab:dias-diferentes) permite distinguir entre usuarios que 
 
 Por último, se analiza la diversidad de conexión de cada usuario contando el número de direcciones IP distintas asociadas a sus eventos.
 
-```{r ip-diferentes, echo=FALSE, message=FALSE, warning=FALSE}
+```{r ip-diferentes, message=FALSE, warning=FALSE}
 ips_usuario <- data %>%
   group_by(`Nombre completo del usuario`) %>%
   summarise(
@@ -326,7 +327,7 @@ Además, los valores muy altos de direcciones IP diferentes deben interpretarse 
 
 Otra cosa que hemos querido investigar es si los estudiantes que se conectan muchos días seguidos terminan entregando más tareas. Para eso, calculamos para cada usuario la racha más larga de días consecutivos que tuvo actividad (solo con accesos desde el ordenador, que son los normales) y lo comparamos con el número de entregas que hizo. Al final miramos la correlación para ver si hay relación entre ser constante y entregar más trabajos.
 
-```{r racha-tareas-entregadas}
+```{r racha-tareas-entregadas, fig.cap="Entregas por días seguidos"}
 
 data_fechas <- data %>%
   filter(Origen == "web") %>%
@@ -460,7 +461,7 @@ Como era de esperar, al comparar estos dos parámetros, vemos \@ref(fig:atencion
 
 Analizamos cuánto tiempo pasa desde el primer clic hasta el último en un mismo día.
 
-```{r maraton}
+```{r maraton, fig.cap="Efecto maratón"}
 
 # Calculamos la duración de la "jornada" diaria por usuario
 sesiones_maraton <- data %>%
@@ -486,7 +487,7 @@ Mediante el diagrama de cajas \@ref(fig:maraton) revela que, aunque la gran mayo
 
 Dividimos a la clase según si solo miran o si realmente envían cosas.
 
-```{r fantasma}
+```{r fantasma, fig.cap="Usuarios fantasma"}
 # Clasificación por palabras clave 
 perfiles <- data %>%
   mutate(Tipo = ifelse(str_detect(`Nombre evento`, "visto|visualizado|descargado"), 
@@ -506,7 +507,7 @@ Esta desproporción\@ref(fig:fantasma) indica que el comportamiento principal de
 
 Calculamos la frecuencia de clics. Si hay muchos clics seguidos (pocos segundos entre ellos), hay estrés.
 
-```{r panico}
+```{r panico, fig.cap="Pánico del Deadline"}
 # Tiempo entre un clic y el anterior 
 velocidad_estres <- data %>%
   arrange(`Nombre completo del usuario`, Hora) %>%
@@ -531,7 +532,7 @@ La rápida caída de la curva hacia los 60 segundos confirma que las sesiones de
 
 ¿Qué recurso abrieron justo el segundo antes de darle a "Enviar"?
 
-```{r rastro}
+```{r rastro, fig.cap="Rastro del estudiante"}
 # Miramos la acción anterior al envío 
 paso_previo <- data %>%
   arrange(`Nombre completo del usuario`, Hora) %>%
