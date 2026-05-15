@@ -499,5 +499,121 @@ ggplot(combinado,
 ```
 
 
+## Pregunta 1 (Edu) ¿Existe el "Efecto Maratón"?
+Analizamos cuánto tiempo pasa desde el primer clic hasta el último en un mismo día.
 
+```{r}
+library(lubridate)
+# Convertimos la columna Hora a formato fecha/hora real de R
+data$Hora <- dmy_hms(data$Hora)
+
+# Calculamos la duración de la "jornada" diaria por usuario
+sesiones_maraton <- data %>%
+  group_by(`Nombre completo del usuario`, Fecha = as.Date(Hora)) %>%
+  summarise(
+    Duracion_Horas = as.numeric(difftime(max(Hora), min(Hora), units = "hours")),
+    .groups = "drop"
+  ) %>%
+  filter(Duracion_Horas > 0.02) # Filtramos sesiones de menos de 1 minuto
+
+# Visualización con Boxplot para ver los "atracones" (Outliers)
+ggplot(sesiones_maraton, aes(x = "Estudiantes", y = Duracion_Horas)) +
+  geom_boxplot(fill = "skyblue", outlier.color = "red") +
+  labs(title = "Distribución de horas de conexión diaria",
+       subtitle = "Los puntos rojos son sesiones maratonianas de estudio",
+       y = "Horas", x = "") +
+  theme_minimal()
+```
+
+Mediante el diagrama de cajas revela que, aunque la gran mayoría de los estudiantes realizan consultas rápidas y puntuales (reflejado en una mediana cercana a cero), existe una asimetría positiva muy marcada con la presencia de outliers significativos. Estos valores atípicos, que alcanzan jornadas de hasta 15 o 20 horas, representan comportamientos de estudio intensivo o posibles descuidos técnicos al dejar la sesión abierta, lo que demuestra una variabilidad extrema en el esfuerzo dedicado.
+
+## Pregunta 2 (Edu) "Usuarios Fantasma": ¿Qué porcentaje de la actividad corresponde a una consulta pasiva frente a una participación activa?
+
+Dividimos a la clase según si solo miran o si realmente envían cosas.
+
+```{r}
+# Clasificación por palabras clave 
+perfiles <- data %>%
+  mutate(Tipo = ifelse(str_detect(`Nombre evento`, "visto|visualizado|descargado"), 
+                       "Pasivo (Solo mira)", "Activo (Interactúa)"))
+
+# Gráfico de barras apiladas (Tema 3)
+ggplot(perfiles, aes(x = Tipo, fill = Tipo)) +
+  geom_bar() +
+  labs(title = "Perfil de interacción de la clase",
+       x = "Tipo de acción", y = "Total de registros") +
+  theme_classic()
+```
+
+Esta desproporción indica que el comportamiento principal de los estudiantes se centra en el consumo de contenidos (visualización de materiales, descarga de archivos y lectura de enunciados) en lugar de la generación de contenido o participación directa.
+
+## Pregunta 3 (Edu) El "Pánico del Deadline": ¿Se incrementa la velocidad y frecuencia de las acciones de los usuarios en situaciones de posible presión temporal?
+
+Calculamos la frecuencia de clics. Si hay muchos clics seguidos (pocos segundos entre ellos), hay estrés.
+
+```{r}
+# Tiempo entre un clic y el anterior 
+velocidad_estres <- data %>%
+  arrange(`Nombre completo del usuario`, Hora) %>%
+  group_by(`Nombre completo del usuario`) %>%
+  mutate(segundos_entre_clics = as.numeric(difftime(Hora, lag(Hora), units = "secs"))) %>%
+  filter(segundos_entre_clics > 0 & segundos_entre_clics < 60) # Clics rápidos (menos de 1 min)
+
+# Visualización de densidad 
+ggplot(velocidad_estres, aes(x = segundos_entre_clics)) +
+  geom_density(fill = "orange", alpha = 0.6) +
+  labs(title = "Gráfico de 'Pánico': Rapidez de clics",
+       x = "Segundos entre clics", y = "Densidad de acciones") +
+  theme_minimal()
+```
+
+El gráfico de densidad del tiempo entre clics muestra un pico extremadamente pronunciado en el intervalo de 0 a 10 segundos, lo que revela un comportamiento de navegación frenética y de alta intensidad. Esta acumulación masiva en tiempos tan cortos sugiere que, cuando los usuarios están activos, no se limitan a leer de forma estática, sino que interactúan con la plataforma de manera muy rápida (descargando múltiples archivos, saltando entre secciones o refrescando páginas).
+
+La rápida caída de la curva hacia los 60 segundos confirma que las sesiones de trabajo en el Aula Virtual se caracterizan por ráfagas de actividad muy concentradas, lo que podría interpretarse como el "Pánico del Deadline" o momentos de alta presión donde el estudiante busca y procesa información a gran velocidad para cumplir con una tarea.
+
+
+## Pregunta 4 (Edu) El "Rastro del Estudiante": ¿Cuál es la secuencia de acciones más frecuente que precede al envío de una tarea?
+
+¿Qué recurso abrieron justo el segundo antes de darle a "Enviar"?
+
+```{r}
+# Miramos la acción anterior al envío 
+paso_previo <- data %>%
+  arrange(`Nombre completo del usuario`, Hora) %>%
+  group_by(`Nombre completo del usuario`) %>%
+  mutate(accion_anterior = lag(`Nombre evento`)) %>%
+  filter(`Nombre evento` == "Se ha enviado una entrega") %>%
+  filter(!is.na(accion_anterior)) %>%
+  count(accion_anterior) %>%
+  top_n(5, n)
+
+# Gráfico de barras horizontal
+ggplot(paso_previo, aes(x = reorder(accion_anterior, n), y = n)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "El camino al envío: Acción justo anterior",
+       x = "Evento previo", y = "Frecuencia") +
+  theme_minimal()
+```
+
+El gráfico muestra que la acción que precede con más frecuencia al "Envío de una entrega" es, curiosamente, el propio evento de "Se ha enviado una entrega". Esto indica un comportamiento de revisión o duplicidad: los alumnos comprueban inmediatamente el estado de su envío o realizan varios intentos seguidos para asegurarse de que el archivo es correcto. 
+
+El resto de acciones del ranking, como "Módulo de curso visto", confirman que el paso previo lógico es la
+navegación por la estructura del curso para localizar el buzón de entrega.
+
+## Pregunta 5 (Edu) Minería de "S.O.S": ¿Qué eventos técnicos o errores de sistema predominan en los registros de los estudiantes?
+
+Buscamos palabras de error en las descripciones de los logs.
+
+```{r}
+# Buscamos términos de error (Tema 6: stringr)
+errores_sos <- data %>%
+  filter(str_detect(tolower(Descripción), "error|fallo|incidencia|problem")) %>%
+  count(`Nombre evento`) %>%
+  arrange(desc(n))
+
+kable(head(errores_sos, 5), col.names = c("Evento de Error", "Frecuencia"),
+      caption = "Principales problemas técnicos detectados")
+```
+Al investigar los posibles fallos en el Aula Virtual , hemos descubierto que el sistema es sumamente estable. Prácticamente no existen errores técnicos reales; de hecho, los pocos casos que aparecen con un valor de '1' en la tabla son situaciones aisladas o simplemente tareas que llevan la palabra 'problema' en su título. Esto nos indica que los estudiantes no dejan de entrar por fallos de la web, sino por otros motivos, ya que la plataforma funciona sin problemas técnicos recurrentes.
 
