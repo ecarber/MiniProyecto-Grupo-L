@@ -420,28 +420,26 @@ El número de direcciones IP diferentes sirve como aproximación a la variedad d
 Además, los valores muy altos de direcciones IP diferentes deben interpretarse con cautela, ya que pueden corresponder a usuarios con un uso muy intensivo de la plataforma, conexiones desde muchas redes distintas o perfiles con un papel especial dentro del curso.
 
 
+Otra cosa que hemos querido investigar es si los estudiantes que se conectan muchos días seguidos terminan entregando más tareas. Para eso, calculamos para cada usuario la racha más larga de días consecutivos que tuvo actividad (solo con accesos desde el ordenador, que son los normales) y lo comparamos con el número de entregas que hizo. Al final miramos la correlación para ver si hay relación entre ser constante y entregar más trabajos.
+
 ```{r fig.cap="Relación entre constancia diaria (racha máxima) y número total de tareas entregadas"}
 
 library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-# Calculamos la racha máxima de días consecutivos por usuario
-# Usamos la columna Tiempo que ya existe de transformaciones anteriores
 data_fechas <- data %>%
   filter(Origen == "web") %>%
   mutate(
-    Fecha = as.Date(Tiempo)  # Tiempo ya existe del chunk de cambio de formato
+    Fecha = as.Date(Tiempo) 
   )
 
-# Función para calcular la racha máxima de días consecutivos
 max_racha <- function(fechas) {
   fechas <- sort(unique(fechas))
   if (length(fechas) == 0) return(0)
   
   diffs <- as.integer(diff(fechas))
   
-  # Inicializamos las variables por separado para mayor claridad
   racha <- 1
   racha_max <- 1
   
@@ -451,37 +449,30 @@ max_racha <- function(fechas) {
     } else {
       racha <- 1
     }
-    
     if (racha > racha_max) {
       racha_max <- racha
     }
   }
-  
   racha_max
 }
 
-# Calculamos la racha máxima por usuario
 rachas_usuario <- data_fechas %>%
   group_by(`Nombre completo del usuario`) %>%
   summarise(Racha_max = max_racha(Fecha), .groups = "drop")
 
-# Calculamos el número de entregas reales por usuario
 entregas_usuario <- data %>%
   filter(Origen == "web",
          `Nombre evento` == "Se ha enviado una entrega") %>%
   group_by(`Nombre completo del usuario`) %>%
   summarise(Total_entregas = n(), .groups = "drop")
-
-# Unimos ambos data frames y excluimos perfiles con rol especial
-# (muy alta actividad = probable docente o administrador)
+ç
 combinado <- rachas_usuario %>%
   inner_join(entregas_usuario, by = "Nombre completo del usuario") %>%
-  filter(Total_entregas <= 40)   # Excluye outliers administrativos
+  filter(Total_entregas <= 40)   # Excluir a los que no han hecho muchas entregas
 
-# Calculamos la correlación
+# correlación
 cor_val <- round(cor(combinado$Racha_max, combinado$Total_entregas, use = "complete.obs"), 2)
 
-# Creamos el gráfico
 ggplot(combinado,
        aes(x = Racha_max, y = Total_entregas)) +
   geom_point(alpha = 0.7, size = 3, color = "green") +
@@ -497,6 +488,76 @@ ggplot(combinado,
   ) +
   theme_minimal(base_size = 12)
 ```
+
+La correlación de 0.33 nos indica que tener una racha alta de actividad, NO significa entregar más tareas. Es cierto que la correlación es positiva, pero es demasiado baja como para poder sacar una conclusión que se pueda defender.
+
+
+
+Dejando de centrarnos específicamente en los alumnos, hemos decidido centrarnos en si se presta atención a todos los alumnos por igual o si hay algunos que reciben mucho más feedback que otros. Para responder, contamos cuántas veces aparece cada estudiante en la columna Usuario afectado (eso indica que alguien hizo algo que le afectaba, como corregirle o mirar su perfil). Luego hicimos un gráfico con todos los alumnos ordenados de los que más atención reciben a los que menos, para ver si la atención se reparte de forma pareja o si unos pocos acumulan casi todo.
+
+```{r fig.cap="Distribución de la atención docente: eventos que afectan a cada alumno"}
+
+library(dplyr)
+library(ggplot2)
+
+# atención que recibe cada alumno
+atencion_todos <- data %>%
+  filter(!is.na(`Usuario afectado`),          
+         `Usuario afectado` != `Nombre completo del usuario`) %>%  # Excluir las que afectan a uno mismo
+  group_by(`Usuario afectado`) %>%
+  summarise(Total_atencion = n(), .groups = "drop") %>%
+  arrange(desc(Total_atencion))
+
+# Añadimos una columna de percentil o ranking para el gráfico
+atencion_todos <- atencion_todos %>%
+  mutate(
+    ranking = row_number(),
+    percentil = ntile(Total_atencion, 100)
+  )
+
+ggplot(atencion_todos, aes(x = ranking, y = Total_atencion)) +
+  geom_point(alpha = 0.5, size = 2, color = "steelblue") +
+  labs(
+    title = "¿Reciben todos los alumnos la misma atención?",
+    subtitle = paste("Total de alumnos que reciben atención:", nrow(atencion_todos)),
+    x = "Alumnos ordenados por atención recibida (del que más al que menos)",
+    y = "Número de eventos que afectan al alumno"
+  ) +
+  theme_minimal()
+```
+
+Viendo el gráfico resultante, podemos ver que hay una gran cantidad de alumnos que no han tenido ninguna o casi ninguna atención, lo que resalta con los otros muchos que sí que han tenido muchas retroalimentaciones y "visitas" de su perfil.
+
+Vamos a hacer una comparación para ver si los alumnos que más entregas han hecho son los que más atención han recibido.
+
+```{r fig.cap="Relación entre atención recibida y tareas entregadas por alumno"}
+
+library(dplyr)
+library(ggplot2)
+
+# unir atencion_todos y entregas_usuario (creados anteriormente)
+comparacion <- atencion_todos %>%
+  rename(Alumno = `Usuario afectado`) %>%
+  inner_join(entregas_usuario, by = c("Alumno" = "Nombre completo del usuario"))
+
+# correlación
+cor_val <- round(cor(comparacion$Total_atencion, comparacion$Total_entregas, use = "complete.obs"), 2)
+
+ggplot(comparacion, aes(x = Total_entregas, y = Total_atencion)) +
+  geom_point(alpha = 0.6, size = 3, color = "green") +
+  geom_smooth(method = "lm", se = TRUE, color = "red", linewidth = 1) +
+  annotate("text", x = max(comparacion$Total_entregas) * 0.2,
+           y = max(comparacion$Total_atencion) * 0.9,
+           label = paste0("Correlación = ", cor_val), 
+           size = 4.5, color = "black") +
+  labs(
+    title = "¿Los que más entregan son los que más atención reciben?",
+    x = "Número de tareas entregadas por el alumno",
+    y = "Número de veces que ha sido afectado (atención recibida)"
+  ) + theme_minimal()
+```
+
+Como era de esperar, al comparar estos dos parámetros, vemos que los alumnos que más tareas han entregado (de normal), son los que más retroalimentaciones se han llevado. Al tener la correlación positiva y casi llegando a 0.7, es un valor que sí que es para tener en cuenta y nos da la información de que están relacionadas.
 
 
 ## Pregunta 1 (Edu) ¿Existe el "Efecto Maratón"?
