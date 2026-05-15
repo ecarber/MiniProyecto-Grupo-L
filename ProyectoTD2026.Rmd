@@ -110,7 +110,7 @@ Tras una primera revisión de los objetivos del proyecto y de la estructura de l
 Para comenzar, en la Tabla \@ref(tab:tabla-estructura) mostramos una muestra de los datos originales. Esto nos permite verificar que tenemos las columnas necesarias (como la fecha, el componente y el nombre del evento) para responder a nuestras preguntas.
 
 ```{r tabla-estructura, echo=FALSE, message=FALSE}
-library(knitr)
+
 # Mostramos las 5 primeras filas de la tabla 'datos' para ver la estructura
 kable(head(data, 5), caption = "Estructura inicial de los logs de la asignatura")
 ```
@@ -132,10 +132,6 @@ Se ha realizado una segunda revisión y se han decretado otras tres preguntas nu
 Este código es para hacer la primera figura de la memoria, como prueba de lo que vamos a hacer durante todo el trabajo
 
 ```{r figura-actividad-horaria, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Distribución de eventos por franja horaria registrados en el Aula Virtual"}
-library(readr)
-library(dplyr)
-library(lubridate)
-library(ggplot2)
 
 data <- read_csv("data/logs_moodle_anon.csv")
 
@@ -197,10 +193,6 @@ ggplot(uso_recursos, aes(x = reorder(Componente, Frecuencia), y = Frecuencia, fi
 
 # Usamos parse_date_time para que sea más flexible con la coma y el año
 
-library(lubridate)
-library(dplyr)
-library(ggplot2)
-
 data <- data %>%
   mutate(
     Tiempo = parse_date_time(Hora, orders = "dmy HMS"),
@@ -240,8 +232,6 @@ ggplot(resumen_horario, aes(x = Franja, y = Total_Eventos, fill = Franja)) +
 Para responder a la pregunta de si el uso de la plataforma es equitativo o si hay "power users" (usuarios muy intensivos), hemos analizado la cantidad de interacciones por cada estudiante.
 
 ```{r usuarios-activos, echo=FALSE, message=FALSE, warning=FALSE}
-library(dplyr)
-library(ggplot2)
 
 # Contamos los clics por usuario y cogemos el Top 15
 top_usuarios <- data %>%
@@ -269,8 +259,6 @@ ggplot(top_usuarios, aes(x = reorder(`Nombre completo del usuario`, Total_Clics)
 Otra pregunta interesante para entender nuestros hábitos es conocer qué plataformas utilizamos para acceder al Aula Virtual. ¿Es el ordenador la única vía o utilizamos dispositivos móviles? Analizamos la variable `Origen`.
 
 ```{r vias-acceso, echo=FALSE, message=FALSE, warning=FALSE}
-library(dplyr)
-library(ggplot2)
 
 # Contamos los clics según su origen (web, ws, etc.)
 accesos <- data %>%
@@ -304,12 +292,6 @@ En esta parte del trabajo se analiza la actividad del Aula Virtual desde una per
 Para responder a esta pregunta se transforma la variable `Hora` en una variable temporal y se extrae el día de la semana. Después se cuentan todos los eventos registrados para cada día.
 
 ```{r anastasia-pregunta-1, echo=FALSE, message=FALSE, warning=FALSE}
-
-library(readr)
-library(dplyr)
-library(ggplot2)
-library(lubridate)
-library(knitr)
 
 # Cargamos los datos si todavía no están cargados en el entorno
 if (!exists("data") || is.function(data)) {
@@ -424,10 +406,6 @@ Otra cosa que hemos querido investigar es si los estudiantes que se conectan muc
 
 ```{r fig.cap="Relación entre constancia diaria (racha máxima) y número total de tareas entregadas"}
 
-library(dplyr)
-library(ggplot2)
-library(lubridate)
-
 data_fechas <- data %>%
   filter(Origen == "web") %>%
   mutate(
@@ -465,7 +443,7 @@ entregas_usuario <- data %>%
          `Nombre evento` == "Se ha enviado una entrega") %>%
   group_by(`Nombre completo del usuario`) %>%
   summarise(Total_entregas = n(), .groups = "drop")
-ç
+
 combinado <- rachas_usuario %>%
   inner_join(entregas_usuario, by = "Nombre completo del usuario") %>%
   filter(Total_entregas <= 40)   # Excluir a los que no han hecho muchas entregas
@@ -496,9 +474,6 @@ La correlación de 0.33 nos indica que tener una racha alta de actividad, NO sig
 Dejando de centrarnos específicamente en los alumnos, hemos decidido centrarnos en si se presta atención a todos los alumnos por igual o si hay algunos que reciben mucho más feedback que otros. Para responder, contamos cuántas veces aparece cada estudiante en la columna Usuario afectado (eso indica que alguien hizo algo que le afectaba, como corregirle o mirar su perfil). Luego hicimos un gráfico con todos los alumnos ordenados de los que más atención reciben a los que menos, para ver si la atención se reparte de forma pareja o si unos pocos acumulan casi todo.
 
 ```{r fig.cap="Distribución de la atención docente: eventos que afectan a cada alumno"}
-
-library(dplyr)
-library(ggplot2)
 
 # atención que recibe cada alumno
 atencion_todos <- data %>%
@@ -532,9 +507,6 @@ Vamos a hacer una comparación para ver si los alumnos que más entregas han hec
 
 ```{r fig.cap="Relación entre atención recibida y tareas entregadas por alumno"}
 
-library(dplyr)
-library(ggplot2)
-
 # unir atencion_todos y entregas_usuario (creados anteriormente)
 comparacion <- atencion_todos %>%
   rename(Alumno = `Usuario afectado`) %>%
@@ -564,7 +536,7 @@ Como era de esperar, al comparar estos dos parámetros, vemos que los alumnos qu
 Analizamos cuánto tiempo pasa desde el primer clic hasta el último en un mismo día.
 
 ```{r}
-library(lubridate)
+
 # Convertimos la columna Hora a formato fecha/hora real de R
 data$Hora <- dmy_hms(data$Hora)
 
