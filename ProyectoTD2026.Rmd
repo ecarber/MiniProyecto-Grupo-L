@@ -58,6 +58,7 @@ summary(data)
 
 El dataset contiene `r nrow(data)` observaciones y `r ncol(data)` variables, cuyos nombres son: Hora, Nombre completo del usuario, Usuario afectado, Contexto del evento, Componente, Nombre evento, Descripción, Origen, Dirección IP. 
 
+
 Vamos a ver cómo están los datos organizados inicialmente. Para ello mostramos las 5 primeras filas del dataframe creado a partir de los datos
 
 ```{r tabla-estructura-inicial, echo=FALSE, message=FALSE}
@@ -291,6 +292,9 @@ ggplot(accesos, aes(x = reorder(Origen, -Total_Clics), y = Total_Clics, fill = O
 
 ```
 
+
+
+
 # Parte Anastasia Gheorghiu
 
 En esta parte del trabajo se analiza la actividad del Aula Virtual desde una perspectiva temporal y de comportamiento. El objetivo es complementar los análisis anteriores, que ya estudian los recursos más usados, las franjas horarias, los usuarios más activos y las vías de acceso.
@@ -414,3 +418,86 @@ kable(ips_usuario, caption = "Usuarios con mayor número de direcciones IP difer
 El número de direcciones IP diferentes sirve como aproximación a la variedad de conexiones utilizadas. No permite identificar dispositivos concretos ni lugares exactos, pero puede indicar si algunos usuarios acceden desde varias redes, como la universidad, casa u otros espacios.
 
 Además, los valores muy altos de direcciones IP diferentes deben interpretarse con cautela, ya que pueden corresponder a usuarios con un uso muy intensivo de la plataforma, conexiones desde muchas redes distintas o perfiles con un papel especial dentro del curso.
+
+
+```{r fig.cap="Relación entre constancia diaria (racha máxima) y número total de tareas entregadas"}
+
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+# Calculamos la racha máxima de días consecutivos por usuario
+# Usamos la columna Tiempo que ya existe de transformaciones anteriores
+data_fechas <- data %>%
+  filter(Origen == "web") %>%
+  mutate(
+    Fecha = as.Date(Tiempo)  # Tiempo ya existe del chunk de cambio de formato
+  )
+
+# Función para calcular la racha máxima de días consecutivos
+max_racha <- function(fechas) {
+  fechas <- sort(unique(fechas))
+  if (length(fechas) == 0) return(0)
+  
+  diffs <- as.integer(diff(fechas))
+  
+  # Inicializamos las variables por separado para mayor claridad
+  racha <- 1
+  racha_max <- 1
+  
+  for (d in diffs) {
+    if (d == 1) {
+      racha <- racha + 1
+    } else {
+      racha <- 1
+    }
+    
+    if (racha > racha_max) {
+      racha_max <- racha
+    }
+  }
+  
+  racha_max
+}
+
+# Calculamos la racha máxima por usuario
+rachas_usuario <- data_fechas %>%
+  group_by(`Nombre completo del usuario`) %>%
+  summarise(Racha_max = max_racha(Fecha), .groups = "drop")
+
+# Calculamos el número de entregas reales por usuario
+entregas_usuario <- data %>%
+  filter(Origen == "web",
+         `Nombre evento` == "Se ha enviado una entrega") %>%
+  group_by(`Nombre completo del usuario`) %>%
+  summarise(Total_entregas = n(), .groups = "drop")
+
+# Unimos ambos data frames y excluimos perfiles con rol especial
+# (muy alta actividad = probable docente o administrador)
+combinado <- rachas_usuario %>%
+  inner_join(entregas_usuario, by = "Nombre completo del usuario") %>%
+  filter(Total_entregas <= 40)   # Excluye outliers administrativos
+
+# Calculamos la correlación
+cor_val <- round(cor(combinado$Racha_max, combinado$Total_entregas, use = "complete.obs"), 2)
+
+# Creamos el gráfico
+ggplot(combinado,
+       aes(x = Racha_max, y = Total_entregas)) +
+  geom_point(alpha = 0.7, size = 3, color = "green") +
+  geom_smooth(method = "lm", se = TRUE, color = "red", linewidth = 1.1) +
+  annotate("text", x = max(combinado$Racha_max) * 0.7,
+           y = max(combinado$Total_entregas) * 0.95,
+           label = paste0("r = ", cor_val), size = 4.5, color = "black") +
+  labs(
+    title = "¿Conectarse más días seguidos lleva a entregar más tareas?",
+    subtitle = "Cada punto es un estudiante. La línea muestra la tendencia lineal",
+    x = "Racha máxima de días consecutivos con actividad",
+    y = "Número total de tareas entregadas"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+
+
+
